@@ -1,14 +1,17 @@
 #define REMOTEXY_MODE__SOFTSERIAL
 #include <SoftwareSerial.h>
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
-
+const int CAPACITY = JSON_OBJECT_SIZE(2);
 const byte BUTTON_PIN = 7;
-const byte LED_PIN = 8;
+const byte LED_PIN = 8;  
 const byte TWO_POINTS_SENSOR_PIN = A0;
 const byte THREE_POINTS_SENSOR_PIN = A1;
 
-// RemoteXY configurate
+
+StaticJsonDocument<CAPACITY> json;
+SoftwareSerial bluetooth(2, 3);
 
 bool longPress(const unsigned int wantedTime, const bool buttonVal)
 {
@@ -111,10 +114,14 @@ void setup()
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   Serial.begin(9600);
+  bluetooth.begin(9600);
 }
 
 void loop()
 {
+
+  json["value"].set(8);
+  json["value2"].set(4);
 
   static bool lastState0;
   static bool lastState1;
@@ -189,5 +196,8 @@ void loop()
   lastState1 = currentState1;
 
   // TODO you loop code
-
+  if(longPress(100, !buttonVal)){
+    serializeJson(json, bluetooth);
+    delay(100);
+  }
 }
