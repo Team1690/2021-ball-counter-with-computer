@@ -3,14 +3,11 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-const int CAPACITY = JSON_OBJECT_SIZE(2);
 const byte BUTTON_PIN = 7;
 const byte LED_PIN = 8;  
 const byte TWO_POINTS_SENSOR_PIN = A0;
 const byte THREE_POINTS_SENSOR_PIN = A1;
 
-
-StaticJsonDocument<CAPACITY> json;
 SoftwareSerial bluetooth(2, 3);
 
 bool longPress(const unsigned int wantedTime, const bool buttonVal)
@@ -120,9 +117,6 @@ void setup()
 void loop()
 {
 
-  json["value"].set(8);
-  json["value2"].set(4);
-
   static bool lastState0;
   static bool lastState1;
   static bool currentState0; //true=sensing ball false=not sensing ball
@@ -135,6 +129,8 @@ void loop()
   static bool isBall;
   unsigned long mil = millis();
   static unsigned long reset_time = 0;
+  static const char INNER_GOAL_C = 'A'; //change later 
+  static const char OUTER_GOAL_C = 'A'; //change later 
 
   int sensorValue0 = analogRead(TWO_POINTS_SENSOR_PIN);
   int sensorValue1 = analogRead(THREE_POINTS_SENSOR_PIN);
@@ -170,6 +166,8 @@ void loop()
     count0++;
     isBall = true;
 
+    Serial.print(INNER_GOAL_C);
+
     score += ((mil - reset_time) <= 20000 ? 4 : 2);
   }
 
@@ -177,6 +175,8 @@ void loop()
   {
     count1++;
     isBall = true;
+    
+    Serial.print(OUTER_GOAL_C);
 
     score += ((mil - reset_time <= 20000) ? 6 : 3);
   }
@@ -194,10 +194,4 @@ void loop()
 
   lastState0 = currentState0;
   lastState1 = currentState1;
-
-  // TODO you loop code
-  if(longPress(100, !buttonVal)){
-    serializeJson(json, bluetooth);
-    delay(100);
-  }
 }
