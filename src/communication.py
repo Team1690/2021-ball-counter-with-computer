@@ -1,15 +1,17 @@
 import serial
 import json
+import serial.tools.list_ports
 
-bluetooth = serial.Serial('COM3', 9600)
-bluetooth.reset_input_buffer()
+def find_arduino_port(): #will return the first arduino uno it finds
+    for port in serial.tools.list_ports.comports():
+        if 'VID:PID=2341:0043' in port.hwid:   
+            return port.device
 
-# bluetooth.write(b'H')
-input = bluetooth.read(22)
-print(input)
-input_json = json.loads(input)
-print(input_json["value"])
-print("------------")
-print(input_json["value2"])
+def get_goal_char():
+    counter = serial.Serial(find_arduino_port(), 9600)
+    counter.reset_input_buffer()
 
-bluetooth.close()
+    goal_char = counter.read(1).decode('UTF-8')
+    return goal_char
+
+# bluetooth.close()
