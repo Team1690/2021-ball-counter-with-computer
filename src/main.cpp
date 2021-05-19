@@ -4,7 +4,7 @@
 #include <ArduinoJson.h>
 
 const byte BUTTON_PIN = 7;
-const byte LED_PIN = 8;  
+const byte LED_PIN = 8;
 const byte TWO_POINTS_SENSOR_PIN = A0;
 const byte THREE_POINTS_SENSOR_PIN = A1;
 
@@ -29,7 +29,6 @@ bool longPress(const unsigned int wantedTime, const bool buttonVal)
     if (hasPressedLongEnough && !hasSucceeded)
     {
       hasSucceeded = true;
-      Serial.println("Count reset! ;)");
       // return true;
     }
   }
@@ -141,82 +140,46 @@ void setup()
 
 void loop()
 {
-
-  static bool lastState0;
-  static bool lastState1;
-  static bool currentState0; //true=sensing ball false=not sensing ball
-  static bool currentState1; //true=sensing ball false=not sensing ball
-  static int count0 = 0;
-  static int count1 = 0;
+  static int count2 = 0;
+  static int count3 = 0;
   static int score = 0;
-  static const int THRESHOLD_HIGH = 600;
-  static const int THRESHOLD_LOW = 400;
-  static bool isBall;
-  unsigned long mil = millis();
-  static unsigned long reset_time = 0;
-  static const char INNER_GOAL_C = 'A'; //change later 
-  static const char OUTER_GOAL_C = 'A'; //change later 
+  static bool ball_found;
+  static const char INNER_GOAL_C = 'A'; //change later
+  static const char OUTER_GOAL_C = 'A'; //change later
 
-  int sensorValue0 = analogRead(TWO_POINTS_SENSOR_PIN);
-  int sensorValue1 = analogRead(THREE_POINTS_SENSOR_PIN);
+  int sensor_val_2 = analogRead(TWO_POINTS_SENSOR_PIN);
+  int sensor_val_3 = analogRead(THREE_POINTS_SENSOR_PIN);
   int buttonVal = digitalRead(BUTTON_PIN);
 
-  if (LEDLongPulse(LED_PIN, isBall))
+  if (LEDLongPulse(LED_PIN, ball_found))
   { //enters if long press finished
     blinkLED(LED_PIN, 300, 600);
   }
 
-  if (sensorValue0 > THRESHOLD_HIGH)
-  {
-    currentState0 = true;
-  }
-  else if (sensorValue0 < THRESHOLD_LOW)
-  {
-    currentState0 = false;
-  }
+  ball_found = false;
 
-  if (sensorValue1 > THRESHOLD_HIGH)
+  if (ball_detected(sensor_val_2))
   {
-    currentState1 = true;
-  }
-  else if (sensorValue1 < THRESHOLD_LOW)
-  {
-    currentState1 = false;
-  }
-
-  isBall = false;
-
-  if (lastState0 && !currentState0)
-  {
-    count0++;
-    isBall = true;
+    count2++;
+    ball_found = true;
 
     Serial.print(INNER_GOAL_C);
-
-    score += ((mil - reset_time) <= 20000 ? 4 : 2);
   }
 
-  if (lastState1 && !currentState1)
+  if (ball_detected(sensor_val_3))
   {
-    count1++;
-    isBall = true;
-    
-    Serial.print(OUTER_GOAL_C);
+    count3++;
+    ball_found = true;
 
-    score += ((mil - reset_time <= 20000) ? 6 : 3);
+    Serial.print(OUTER_GOAL_C);
   }
 
   if (longPress(1000, !buttonVal))
   {
-    count0 = 0;
-    count1 = 0;
+    count2 = 0;
+    count3 = 0;
     score = 0;
 
     LEDLongPulse(LED_PIN, true);
-
-    reset_time = mil;
   }
-
-  lastState0 = currentState0;
-  lastState1 = currentState1;
 }
