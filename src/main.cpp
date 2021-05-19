@@ -105,6 +105,31 @@ void blinkLED(int pinNum, unsigned int onTime, unsigned int offTime)
     ledState = !ledState;
   }
 }
+bool ball_detected(int sensor_val)
+{
+  static const int THRESHOLD_HIGH = 600;
+  static const int THRESHOLD_LOW = 400;
+  static bool curr_state; //true=sensing ball false=not sensing ball
+  static bool last_state;
+
+  if (sensor_val > THRESHOLD_HIGH)
+  {
+    curr_state = true;
+  }
+  else if (sensor_val < THRESHOLD_LOW)
+  {
+    curr_state = false;
+  }
+
+  if (last_state && !curr_state)
+  {
+    last_state = curr_state;
+    return true;
+  }
+
+  last_state = curr_state;
+  return false;
+}
 
 void setup()
 {
