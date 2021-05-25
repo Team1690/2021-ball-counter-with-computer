@@ -5,7 +5,8 @@
 
 const byte BUTTON_PIN = 7;
 const byte LED_PIN = 8;
-const byte TWO_POINTS_SENSOR_PIN = A0;
+const byte TWO_POINTS_SENSOR_PIN_1 = A0;
+const byte TWO_POINTS_SENSOR_PIN_2 = A5;
 const byte THREE_POINTS_SENSOR_PIN = A1;
 
 SoftwareSerial bluetooth(2, 3);
@@ -147,7 +148,8 @@ void loop()
   static const char INNER_GOAL_C = 'A'; //change later
   static const char OUTER_GOAL_C = 'A'; //change later
 
-  int sensor_val_2 = analogRead(TWO_POINTS_SENSOR_PIN);
+  int sensor_val_2_1 = analogRead(TWO_POINTS_SENSOR_PIN_1);
+  int sensor_val_2_2 = analogRead(TWO_POINTS_SENSOR_PIN_2);
   int sensor_val_3 = analogRead(THREE_POINTS_SENSOR_PIN);
   int buttonVal = digitalRead(BUTTON_PIN);
 
@@ -158,12 +160,19 @@ void loop()
 
   ball_found = false;
 
-  if (ball_detected(sensor_val_2))
+  if (ball_detected(sensor_val_2_1))
   {
     count2++;
     ball_found = true;
 
-    Serial.print(INNER_GOAL_C);
+    Serial.print(OUTER_GOAL_C);
+  }
+
+  if (ball_detected(sensor_val_2_2))
+  {
+    count2++;
+    ball_found = true;
+    Serial.print(OUTER_GOAL_C);
   }
 
   if (ball_detected(sensor_val_3))
@@ -171,7 +180,7 @@ void loop()
     count3++;
     ball_found = true;
 
-    Serial.print(OUTER_GOAL_C);
+    Serial.print(INNER_GOAL_C);
   }
 
   if (longPress(1000, !buttonVal))
