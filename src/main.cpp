@@ -1,7 +1,4 @@
-#define REMOTEXY_MODE__SOFTSERIAL
-#include <SoftwareSerial.h>
 #include <Arduino.h>
-#include <ArduinoJson.h>
 
 const byte BUTTON_PIN = 7;
 const byte LED_PIN = 8;
@@ -9,7 +6,6 @@ const byte TWO_POINTS_SENSOR_PIN_1 = A0;
 const byte TWO_POINTS_SENSOR_PIN_2 = A5;
 const byte THREE_POINTS_SENSOR_PIN = A1;
 
-SoftwareSerial bluetooth(2, 3);
 
 bool longPress(const unsigned int wantedTime, const bool buttonVal)
 {
@@ -110,7 +106,6 @@ bool ball_detected(int sensor_val)
   static const int THRESHOLD_HIGH = 600;
   static const int THRESHOLD_LOW = 400;
   static bool curr_state; //true=sensing ball false=not sensing ball
-  static bool last_state;
 
   if (sensor_val > THRESHOLD_HIGH)
   {
@@ -120,23 +115,15 @@ bool ball_detected(int sensor_val)
   {
     curr_state = false;
   }
-
-  if (last_state && !curr_state)
-  {
-    last_state = curr_state;
-    return true;
-  }
-
-  last_state = curr_state;
-  return false;
+  return curr_state;
 }
 
 void setup()
 {
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
   Serial.begin(9600);
-  bluetooth.begin(9600);
 }
 
 void loop()
@@ -152,6 +139,12 @@ void loop()
   int sensor_val_2_2 = analogRead(TWO_POINTS_SENSOR_PIN_2);
   int sensor_val_3 = analogRead(THREE_POINTS_SENSOR_PIN);
   int buttonVal = digitalRead(BUTTON_PIN);
+  const int curr_state1 = ball_detected(sensor_val_2_1);
+  const int curr_state2 = ball_detected(sensor_val_2_2);
+  const int curr_state3 = ball_detected(sensor_val_3);
+  static int last_state1 = false;
+  static int last_state2 = false;
+  static int last_state3 = false;
 
   if (LEDLongPulse(LED_PIN, ball_found))
   { //enters if long press finished
@@ -160,7 +153,7 @@ void loop()
 
   ball_found = false;
 
-  if (ball_detected(sensor_val_2_1))
+  if (last_state1 && !curr_state1)
   {
     count2++;
     ball_found = true;
@@ -168,20 +161,22 @@ void loop()
     Serial.print(OUTER_GOAL_C);
   }
 
-  if (ball_detected(sensor_val_2_2))
+  if (last_state2 && !curr_state2)
   {
     count2++;
     ball_found = true;
     Serial.print(OUTER_GOAL_C);
   }
 
-  if (ball_detected(sensor_val_3))
+  if (last_state3 && !curr_state3)
   {
     count3++;
     ball_found = true;
 
     Serial.print(INNER_GOAL_C);
   }
+
+//  Serial.println(count2);
 
   if (longPress(1000, !buttonVal))
   {
@@ -191,4 +186,12 @@ void loop()
 
     LEDLongPulse(LED_PIN, true);
   }
+  Serial.print(sensor_val_2_1);
+  Serial.print("\t");
+  Serial.print(sensor_val_2_2);
+  Serial.print("\t");
+  Serial.println(sensor_val_3);
+  last_state1 = curr_state1;
+  last_state2 = curr_state2;
+  last_state3 = curr_state3;
 }
