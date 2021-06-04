@@ -1,14 +1,15 @@
 import serial
 import serial.tools.list_ports
 import requests
+from requests.exceptions import ConnectTimeout
 import time
 import _thread as thread
 import websocket
 
-FMS_SERVER = "localhost:8080"
+FMS_SERVER = "10.0.100.5:8080"
 ALLIANCE_COLOR = 'red' # Change accordingly
 USERNAME = 'admin'
-PASSWORD = 'Password1'
+PASSWORD = 'CAR1690IL'
 
 goal_char_msg_map = {
     "I": '{ "type": "CI" }',
@@ -50,14 +51,22 @@ def get_on_ws_open_callback(connection):
     return on_ws_open
     
 def open_websocket(serial_connection):
+    print("Open websocke")
     def reopen_websocket():
         open_websocket(serial_connection)
 
-    res = requests.post(f'http://{FMS_SERVER}/login'
-        , data={'username': USERNAME, 'password': PASSWORD}
-        , allow_redirects=False
-    )
+    while True:
+        try:
+            print("Posting")
+            res = requests.post(f'http://{FMS_SERVER}/login'
+                , data={'username': USERNAME, 'password': PASSWORD}
+                , allow_redirects=False, timeout=5
+            )
+            break
+        except ConnectTimeout as e:
+            pass
 
+    print("Connection to websocke")
     ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{ALLIANCE_COLOR}/websocket'
         , on_open=get_on_ws_open_callback(serial_connection)
         , on_close=reopen_websocket
@@ -66,6 +75,7 @@ def open_websocket(serial_connection):
 
     ws.run_forever()
 
+        
 def main():
     connection = serial.Serial(find_arduino_port(), 9600)
 
