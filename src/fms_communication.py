@@ -38,13 +38,15 @@ def get_on_ws_open_callback(connection):
         def run(*args):
             while(True):
                 goal_char = get_goal_char(connection)
-                print(f'Info: recieved "{goal_char}"')
+                if goal_char not in '1234567890\t\n\x0d':
+                    print(f'Info: recieved "{goal_char}"')
 
                 if (goal_char in goal_char_msg_map):
                     print(f'Info: sent {get_msg_from_goal_char(goal_char)}')
                     ws.send(get_msg_from_goal_char(goal_char))
                 else:
-                    print('Error: unknown char recieved')
+                    pass
+                    # print('Error: unknown char recieved')
 
         thread.start_new_thread(run, ())
     
