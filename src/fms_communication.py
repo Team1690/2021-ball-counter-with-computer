@@ -1,3 +1,4 @@
+import sys
 import serial
 import serial.tools.list_ports
 import requests
@@ -52,10 +53,10 @@ def get_on_ws_open_callback(connection):
     
     return on_ws_open
     
-def open_websocket(serial_connection):
+def open_websocket(serial_connection, color):
     print("Open websocke")
     def reopen_websocket():
-        open_websocket(serial_connection)
+        open_websocket(serial_connection, color)
 
     while True:
         try:
@@ -69,7 +70,7 @@ def open_websocket(serial_connection):
             pass
 
     print("Connection to websocke")
-    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{ALLIANCE_COLOR}/websocket'
+    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
         , on_open=get_on_ws_open_callback(serial_connection)
         , on_close=reopen_websocket
         , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
@@ -79,11 +80,21 @@ def open_websocket(serial_connection):
 
         
 def main():
+    HELP = f"USAGE: python3 {sys.argv[0]} red/blue"
+    if len(sys.argv) < 2:
+        print(HELP)
+        return
+
+    color = sys.argv[1]
+    if color not in ['red', 'blue']:
+        print(HELP)
+        return
+
     connection = serial.Serial(find_arduino_port(), 9600)
 
     if (connection.is_open):
         print("Connected to arduino")
     
-    open_websocket(connection)
+    open_websocket(connection, color)
 
 main()
