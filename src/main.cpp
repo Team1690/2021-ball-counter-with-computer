@@ -6,10 +6,12 @@ const int LED_PIN = 8;
 const int TWO_POINTS_SENSOR_PIN_1 = A0;
 const int TWO_POINTS_SENSOR_PIN_2 = A5;
 const int THREE_POINTS_SENSOR_PIN = A1;
+const int ONE_POINT_SENSOR_PIN = A4;
 
-Ball_detector sensor1(TWO_POINTS_SENSOR_PIN_1);
-Ball_detector sensor2(TWO_POINTS_SENSOR_PIN_2);
-Ball_detector sensor3(THREE_POINTS_SENSOR_PIN);
+Ball_detector two_points_sensor1(TWO_POINTS_SENSOR_PIN_1);
+Ball_detector two_points_sensor2(TWO_POINTS_SENSOR_PIN_2);
+Ball_detector three_points_sensor(THREE_POINTS_SENSOR_PIN);
+Ball_detector one_point_sensor(ONE_POINT_SENSOR_PIN);
 
 bool longPress(const unsigned int wantedTime, const bool buttonVal)
 {
@@ -116,12 +118,14 @@ void setup()
 
 void loop()
 {
+  static int count1 = 0;
   static int count2 = 0;
   static int count3 = 0;
   static int score = 0;
   static bool ball_found;
-  static const char INNER_GOAL_C = 'A'; //change later
-  static const char OUTER_GOAL_C = 'A'; //change later
+  static const char INNER_GOAL_C = 'I';
+  static const char OUTER_GOAL_C = 'O';
+  static const char LOWER_GOAL_C = 'L'; //change later
 
   int buttonVal = digitalRead(BUTTON_PIN);
 
@@ -132,7 +136,15 @@ void loop()
 
   ball_found = false;
 
-  if (sensor1.ball_detected())
+  if (one_point_sensor.ball_detected())
+  {
+    count1++;
+    ball_found = true;
+
+    Serial.print(LOWER_GOAL_C);
+  }
+
+  if (two_points_sensor1.ball_detected())
   {
     count2++;
     ball_found = true;
@@ -140,14 +152,14 @@ void loop()
     Serial.print(OUTER_GOAL_C);
   }
 
-  if (sensor2.ball_detected())
+  if (two_points_sensor2.ball_detected())
   {
     count2++;
     ball_found = true;
     Serial.print(OUTER_GOAL_C);
   }
 
-  if (sensor3.ball_detected())
+  if (three_points_sensor.ball_detected())
   {
     count3++;
     ball_found = true;
@@ -163,9 +175,11 @@ void loop()
 
     LEDLongPulse(LED_PIN, true);
   }
-  Serial.print(sensor1.get_value());
+  Serial.print(one_point_sensor.get_value());
   Serial.print("\t");
-  Serial.print(sensor2.get_value());
+  Serial.print(two_points_sensor1.get_value());
   Serial.print("\t");
-  Serial.println(sensor3.get_value());
+  Serial.print(two_points_sensor2.get_value());
+  Serial.print("\t");
+  Serial.println(three_points_sensor.get_value());
 }
