@@ -1,14 +1,16 @@
+import sys
 import serial
 import serial.tools.list_ports
 import requests
+from requests.exceptions import ConnectTimeout
 import time
 import _thread as thread
 import websocket
 
-FMS_SERVER = "localhost:8080"
+FMS_SERVER = "10.0.100.5:8080"
 ALLIANCE_COLOR = 'red' # Change accordingly
 USERNAME = 'admin'
-PASSWORD = 'Password1'
+PASSWORD = 'CAR1690IL'
 
 goal_char_msg_map = {
     "I": '{ "type": "CI" }',
@@ -43,22 +45,31 @@ def get_on_ws_open_callback(connection):
                     print(f'Info: sent {get_msg_from_goal_char(goal_char)}')
                     ws.send(get_msg_from_goal_char(goal_char))
                 else:
-                    print('Error: unknown char recieved')
+                    pass
+                    # print('Error: unknown char recieved')
 
         thread.start_new_thread(run, ())
     
     return on_ws_open
     
-def open_websocket(serial_connection):
+def open_websocket(serial_connection, color):
+    print("Open websocke")
     def reopen_websocket():
-        open_websocket(serial_connection)
+        open_websocket(serial_connection, color)
 
-    res = requests.post(f'http://{FMS_SERVER}/login'
-        , data={'username': USERNAME, 'password': PASSWORD}
-        , allow_redirects=False
-    )
+    while True:
+        try:
+            print("Posting")
+            res = requests.post(f'http://{FMS_SERVER}/login'
+                , data={'username': USERNAME, 'password': PASSWORD}
+                , allow_redirects=False, timeout=5
+            )
+            break
+        except ConnectTimeout as e:
+            pass
 
-    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{ALLIANCE_COLOR}/websocket'
+    print("Connection to websocke")
+    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
         , on_open=get_on_ws_open_callback(serial_connection)
         , on_close=reopen_websocket
         , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
@@ -66,12 +77,23 @@ def open_websocket(serial_connection):
 
     ws.run_forever()
 
+        
 def main():
+    HELP = f"USAGE: python3 {sys.argv[0]} red/blue"
+    if len(sys.argv) < 2:
+        print(HELP)
+        return
+
+    color = sys.argv[1]
+    if color not in ['red', 'blue']:
+        print(HELP)
+        return
+
     connection = serial.Serial(find_arduino_port(), 9600)
 
     if (connection.is_open):
         print("Connected to arduino")
     
-    open_websocket(connection)
+    open_websocket(connection, color)
 
 main()
