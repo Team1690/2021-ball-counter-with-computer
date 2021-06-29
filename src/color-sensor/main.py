@@ -7,7 +7,7 @@ OUTPUT_PIN = 0  # change later
 CYCLES_TO_WAIT = 10
 
 
-def detect_color(S2_VALUE, S3_VALUE):
+def get_raw_frequency(S2_VALUE, S3_VALUE):
     GPIO.output(S2_PIN, S2_VALUE)
     GPIO.output(S3_PIN, S3_VALUE)
     time.sleep(0.3)
