@@ -16,3 +16,10 @@ def ditect_color(S2_VALUE, S3_VALUE):
         GPIO.wait_for_edge(OUTPUT_PIN, GPIO.FALLING)
     duration = time.time() - start  # seconds to run for loop
     red = CYCLES_TO_WAIT / duration  # in Hz
+
+def setup():
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setup(OUTPUT_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+  GPIO.setup(S2_PIN,GPIO.OUT)
+  GPIO.setup(S3_PIN,GPIO.OUT)
+  print("\n")
