@@ -1,14 +1,17 @@
-#define REMOTEXY_MODE__SOFTSERIAL
-#include <SoftwareSerial.h>
 #include <Arduino.h>
-#include <ArduinoJson.h>
+#include ".\ball_detector.h"
 
-const byte BUTTON_PIN = 7;
-const byte LED_PIN = 8;  
-const byte TWO_POINTS_SENSOR_PIN = A0;
-const byte THREE_POINTS_SENSOR_PIN = A1;
+const int BUTTON_PIN = 7;
+const int LED_PIN = 8;
+const int TWO_POINTS_SENSOR_PIN_1 = A0;
+const int TWO_POINTS_SENSOR_PIN_2 = A5;
+const int THREE_POINTS_SENSOR_PIN = A1;
+const int ONE_POINT_SENSOR_PIN = A4;
 
-SoftwareSerial bluetooth(2, 3);
+Ball_detector two_points_sensor1(TWO_POINTS_SENSOR_PIN_1);
+Ball_detector two_points_sensor2(TWO_POINTS_SENSOR_PIN_2);
+Ball_detector three_points_sensor(THREE_POINTS_SENSOR_PIN);
+Ball_detector one_point_sensor(ONE_POINT_SENSOR_PIN);
 
 bool longPress(const unsigned int wantedTime, const bool buttonVal)
 {
@@ -29,7 +32,6 @@ bool longPress(const unsigned int wantedTime, const bool buttonVal)
     if (hasPressedLongEnough && !hasSucceeded)
     {
       hasSucceeded = true;
-      Serial.println("Count reset! ;)");
       // return true;
     }
   }
@@ -110,88 +112,74 @@ void setup()
 {
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
   Serial.begin(9600);
-  bluetooth.begin(9600);
 }
 
 void loop()
 {
-
-  static bool lastState0;
-  static bool lastState1;
-  static bool currentState0; //true=sensing ball false=not sensing ball
-  static bool currentState1; //true=sensing ball false=not sensing ball
-  static int count0 = 0;
   static int count1 = 0;
+  static int count2 = 0;
+  static int count3 = 0;
   static int score = 0;
-  static const int THRESHOLD_HIGH = 600;
-  static const int THRESHOLD_LOW = 400;
-  static bool isBall;
-  unsigned long mil = millis();
-  static unsigned long reset_time = 0;
-  static const char INNER_GOAL_C = 'A'; //change later 
-  static const char OUTER_GOAL_C = 'A'; //change later 
+  static bool ball_found;
+  static const char INNER_GOAL_C = 'I';
+  static const char OUTER_GOAL_C = 'O';
+  static const char LOWER_GOAL_C = 'L'; //change later
 
-  int sensorValue0 = analogRead(TWO_POINTS_SENSOR_PIN);
-  int sensorValue1 = analogRead(THREE_POINTS_SENSOR_PIN);
   int buttonVal = digitalRead(BUTTON_PIN);
 
-  if (LEDLongPulse(LED_PIN, isBall))
+  if (LEDLongPulse(LED_PIN, ball_found))
   { //enters if long press finished
     blinkLED(LED_PIN, 300, 600);
   }
 
-  if (sensorValue0 > THRESHOLD_HIGH)
-  {
-    currentState0 = true;
-  }
-  else if (sensorValue0 < THRESHOLD_LOW)
-  {
-    currentState0 = false;
-  }
+  ball_found = false;
 
-  if (sensorValue1 > THRESHOLD_HIGH)
-  {
-    currentState1 = true;
-  }
-  else if (sensorValue1 < THRESHOLD_LOW)
-  {
-    currentState1 = false;
-  }
-
-  isBall = false;
-
-  if (lastState0 && !currentState0)
-  {
-    count0++;
-    isBall = true;
-
-    Serial.print(INNER_GOAL_C);
-
-    score += ((mil - reset_time) <= 20000 ? 4 : 2);
-  }
-
-  if (lastState1 && !currentState1)
+  if (one_point_sensor.ball_detected())
   {
     count1++;
-    isBall = true;
-    
-    Serial.print(OUTER_GOAL_C);
+    ball_found = true;
 
-    score += ((mil - reset_time <= 20000) ? 6 : 3);
+    Serial.print(LOWER_GOAL_C);
+  }
+
+  if (two_points_sensor1.ball_detected())
+  {
+    count2++;
+    ball_found = true;
+
+    Serial.print(OUTER_GOAL_C);
+  }
+
+  if (two_points_sensor2.ball_detected())
+  {
+    count2++;
+    ball_found = true;
+    Serial.print(OUTER_GOAL_C);
+  }
+
+  if (three_points_sensor.ball_detected())
+  {
+    count3++;
+    ball_found = true;
+
+    Serial.print(INNER_GOAL_C);
   }
 
   if (longPress(1000, !buttonVal))
   {
-    count0 = 0;
-    count1 = 0;
+    count2 = 0;
+    count3 = 0;
     score = 0;
 
     LEDLongPulse(LED_PIN, true);
-
-    reset_time = mil;
   }
-
-  lastState0 = currentState0;
-  lastState1 = currentState1;
+  Serial.print(one_point_sensor.get_value());
+  Serial.print("\t");
+  Serial.print(two_points_sensor1.get_value());
+  Serial.print("\t");
+  Serial.print(two_points_sensor2.get_value());
+  Serial.print("\t");
+  Serial.println(three_points_sensor.get_value());
 }
