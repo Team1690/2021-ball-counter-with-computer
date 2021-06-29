@@ -24,3 +24,11 @@ def setup():
   GPIO.setup(S2_PIN,GPIO.OUT)
   GPIO.setup(S3_PIN,GPIO.OUT)
   print("\n")
+
+if __name__=='__main__':
+    setup()
+    while(True):
+
+        red_frequncy = detect_color(GPIO.LOW, GPIO.LOW)
+        blue_frequncy = detect_color(GPIO.LOW, GPIO.HIGH)
+        green_frequncy = detect_color(GPIO.HIGH, GPIO.HIGH)
