@@ -53,28 +53,28 @@ if __name__=='__main__':
     try:
         curr_color = "  "
         while(True):
-             red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
-             blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
-             green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
-             norm_red = normalize_frequency(red_frequency)
-             norm_blue = normalize_frequency(blue_frequency)
-             norm_green = normalize_frequency(green_frequency)
+            red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
+            blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
+            green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
+            norm_red = normalize_frequency(red_frequency)
+            norm_blue = normalize_frequency(blue_frequency)
+            norm_green = normalize_frequency(green_frequency)
 
-             hue, saturation = hue_saturation_from_rgb(norm_red,norm_green, norm_blue)
-             prev_color = curr_color
-             if 320 < hue < 360:
-                curr_color = "red"
-             elif 120 < hue < 180:
-                curr_color = "green"
-             elif 200 < hue < 240:
-                curr_color = "blue"
-             elif 10 < hue < 50:
-                curr_color = "yellow"
+            hue, saturation = hue_saturation_from_rgb(norm_red,norm_green, norm_blue)
+            prev_color = curr_color
+            if 320 < hue < 360:
+               curr_color = "red"
+            elif 120 < hue < 180:
+               curr_color = "green"
+            elif 200 < hue < 240:
+               curr_color = "blue"
+            elif 10 < hue < 50:
+               curr_color = "yellow"
 
-             if curr_color != prev_color:
-                print(curr_color)
+            if curr_color != prev_color:
+               print(curr_color)
  
     except KeyBoardInterrupt:
         print("keyboard interrupt")
     finally:
-         GPIO.cleanup()
+        GPIO.cleanup()
