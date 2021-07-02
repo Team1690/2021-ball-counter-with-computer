@@ -12,6 +12,7 @@ def hue_saturation_from_rgb(r, g, b):
     delta = c_max - c_min
     hue = 0
     saturation = 0
+
     if delta == 0:
         hue = 0
     elif c_max == r:
@@ -20,11 +21,11 @@ def hue_saturation_from_rgb(r, g, b):
         hue = 60 * ((b - r) / delta + 2)
     elif c_max == b:
         hue = 60 * ((r - g) / delta + 4)
-    if c_max == 0:
-        saturation = 0
-    else:
+    if c_max != 0:
         saturation = delta / c_max
+        
     return hue, saturation
+
 # needs to be calibrated when changing lighting
 def normalize_frequency(freq):
     return min(1, max(0, (freq - 250) / 4000))
@@ -35,18 +36,20 @@ def get_raw_frequency(S2_VALUE, S3_VALUE):
     time.sleep(0.001)
     GPIO.wait_for_edge(OUTPUT_PIN, GPIO.FALLING)
     start = time.time()
+
     for impulse_count in range(CYCLES_TO_WAIT):
         GPIO.wait_for_edge(OUTPUT_PIN, GPIO.FALLING)
+
     duration = time.time() - start  # seconds to run for loop
     frequency = CYCLES_TO_WAIT / duration  # in Hz
     return frequency
 
 def setup():
-  GPIO.setmode(GPIO.BCM)
-  GPIO.setup(OUTPUT_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-  GPIO.setup(S2_PIN,GPIO.OUT)
-  GPIO.setup(S3_PIN,GPIO.OUT)
-  print("\n")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(OUTPUT_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(S2_PIN,GPIO.OUT)
+    GPIO.setup(S3_PIN,GPIO.OUT)
+    print("\n")
 
 if __name__=='__main__':
     setup()
@@ -62,17 +65,18 @@ if __name__=='__main__':
 
             hue, saturation = hue_saturation_from_rgb(norm_red,norm_green, norm_blue)
             prev_color = curr_color
+
             if 320 < hue < 360:
-               curr_color = "red"
+                curr_color = "red"
             elif 120 < hue < 180:
-               curr_color = "green"
+                curr_color = "green"
             elif 200 < hue < 240:
-               curr_color = "blue"
+                curr_color = "blue"
             elif 10 < hue < 50:
-               curr_color = "yellow"
+                curr_color = "yellow"
 
             if curr_color != prev_color:
-               print(curr_color)
+                print(curr_color)
  
     except KeyBoardInterrupt:
         print("keyboard interrupt")
