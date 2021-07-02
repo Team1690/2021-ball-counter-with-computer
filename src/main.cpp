@@ -60,8 +60,6 @@ bool LEDLongPulse(int pinNum, bool state)
   static bool isDone;
   unsigned long mil = millis();
 
-  pinMode(pinNum, OUTPUT);
-
   if (state)
   {
     digitalWrite(pinNum, HIGH);
@@ -87,11 +85,10 @@ void blinkLED(int pinNum, unsigned int onTime, unsigned int offTime)
 {
   //blinks a LED connected to digital output pin - pinNum.
   // onTime and offTime are in milliseconds.
-  static unsigned long changeTime;
-  static bool ledState;
+  static unsigned long changeTime = 0;
+  static bool ledState = false;
   unsigned long mil = millis();
 
-  pinMode(pinNum, OUTPUT);
   //  turn the LED on
   if (!ledState && mil - changeTime >= offTime)
   {
