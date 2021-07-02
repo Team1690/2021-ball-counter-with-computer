@@ -23,7 +23,7 @@ def hue_saturation_from_rgb(r, g, b):
         hue = 60 * ((r - g) / delta + 4)
     if c_max != 0:
         saturation = delta / c_max
-        
+
     return hue, saturation
 
 # needs to be calibrated when changing lighting
@@ -77,8 +77,6 @@ if __name__=='__main__':
 
             if curr_color != prev_color:
                 print(curr_color)
- 
-    except KeyBoardInterrupt:
-        print("keyboard interrupt")
+
     finally:
         GPIO.cleanup()
