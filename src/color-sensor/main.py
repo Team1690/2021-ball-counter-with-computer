@@ -48,6 +48,11 @@ def get_raw_frequency(S2_VALUE, S3_VALUE):
     return frequency
 
 
+def send_data(curr_color, switched_color, stayed_for_2_sec):
+    # TODO send data
+    return curr_color, switched_color, stayed_for_2_sec
+
+
 def setup():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(OUTPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -60,7 +65,9 @@ if __name__ == "__main__":
     setup()
     try:
         curr_color = prev_color = " "
-        change_time = 0
+        color_change_time = 0
+        last_send_time = 0
+        switched_color = False
         while True:
             curr_time = time.time()
 
@@ -75,19 +82,27 @@ if __name__ == "__main__":
 
             if 320 < hue < 360 and prev_color != "blue" and temp_color != "red":
                 temp_color = "red"
-                change_time = curr_time
+                color_change_time = curr_time
             elif 120 < hue < 180 and prev_color != "yellow" and temp_color != "green":
                 temp_color = "green"
-                change_time = curr_time
+                color_change_time = curr_time
             elif 200 < hue < 240 and prev_color != "red" and temp_color != "blue":
                 temp_color = "blue"
-                change_time = curr_time
+                color_change_time = curr_time
             elif 10 < hue < 50 and prev_color != "green" and temp_color != "yellow":
                 temp_color = "yellow"
-                change_time = curr_time
+                color_change_time = curr_time
 
-            if curr_time - change_time >= 0.06:
+            if curr_time - color_change_time >= 0.06:
                 curr_color = temp_color
+                switched_color = True
+
+            if curr_time - last_send_time >= 0.1:
+                last_send_time = curr_time
+                send_data(
+                    curr_color, switched_color, curr_time - color_change_time >= 2
+                )
+                switched_color = False
 
             if curr_color != prev_color:
                 print(curr_color)
