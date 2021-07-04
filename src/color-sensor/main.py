@@ -6,6 +6,7 @@ S3_PIN = 13
 OUTPUT_PIN = 26
 CYCLES_TO_WAIT = 3
 
+
 def hue_saturation_from_rgb(r, g, b):
     c_max = max(r, g, b)
     c_min = min(r, g, b)
@@ -26,9 +27,11 @@ def hue_saturation_from_rgb(r, g, b):
 
     return hue, saturation
 
+
 # needs to be calibrated when changing lighting
 def normalize_frequency(freq):
     return min(1, max(0, (freq - 250) / 4000))
+
 
 def get_raw_frequency(S2_VALUE, S3_VALUE):
     GPIO.output(S2_PIN, S2_VALUE)
@@ -44,18 +47,20 @@ def get_raw_frequency(S2_VALUE, S3_VALUE):
     frequency = CYCLES_TO_WAIT / duration  # in Hz
     return frequency
 
+
 def setup():
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(OUTPUT_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(S2_PIN,GPIO.OUT)
-    GPIO.setup(S3_PIN,GPIO.OUT)
+    GPIO.setup(OUTPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(S2_PIN, GPIO.OUT)
+    GPIO.setup(S3_PIN, GPIO.OUT)
     print("\n")
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     setup()
     try:
-        curr_color = "  "
-        while(True):
+        curr_color = prev_color = " "
+        while True:
             red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
             blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
             green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
@@ -63,20 +68,20 @@ if __name__=='__main__':
             norm_blue = normalize_frequency(blue_frequency)
             norm_green = normalize_frequency(green_frequency)
 
-            hue, saturation = hue_saturation_from_rgb(norm_red,norm_green, norm_blue)
-            prev_color = curr_color
+            hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
 
-            if 320 < hue < 360:
+            if 320 < hue < 360 and prev_color != "blue":
                 curr_color = "red"
-            elif 120 < hue < 180:
+            elif 120 < hue < 180 and prev_color != "yellow":
                 curr_color = "green"
-            elif 200 < hue < 240:
+            elif 200 < hue < 240 and prev_color != "red":
                 curr_color = "blue"
-            elif 10 < hue < 50:
+            elif 10 < hue < 50 and prev_color != "green":
                 curr_color = "yellow"
 
             if curr_color != prev_color:
                 print(curr_color)
 
+            prev_color = curr_color
     finally:
         GPIO.cleanup()
