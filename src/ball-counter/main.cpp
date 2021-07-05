@@ -122,7 +122,7 @@ void loop()
   static bool ball_found;
   static const char INNER_GOAL_C = 'I';
   static const char OUTER_GOAL_C = 'O';
-  static const char LOWER_GOAL_C = 'L'; //change later
+  static const char LOWER_GOAL_C = 'L';
 
   int buttonVal = digitalRead(BUTTON_PIN);
 
