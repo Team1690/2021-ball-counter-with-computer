@@ -1,5 +1,20 @@
 import RPi.GPIO as GPIO
 import time
+import RPi.GPIO as GPIO
+import time
+import sys
+import serial
+import serial.tools.list_ports
+import requests
+from requests.exceptions import ConnectTimeout
+import time
+import _thread as thread
+import websocket
+
+FMS_SERVER = "10.0.100.5:8080"
+ALLIANCE_COLOR = 'red' # Change accordingly
+USERNAME = 'admin'
+PASSWORD = 'CAR1690IL'
 
 S2_PIN = 19
 S3_PIN = 13
@@ -60,53 +75,107 @@ def setup():
     GPIO.setup(S3_PIN, GPIO.OUT)
     print("\n")
 
+def get_on_ws_open_callback():
+    def on_ws_open(ws):
+        print("Connected to FMS")
 
-if __name__ == "__main__":
-    setup()
-    try:
-        curr_color = prev_color = " "
-        color_change_time = 0
-        last_send_time = 0
-        switched_color = False
-        while True:
-            curr_time = time.time()
+        setup()
 
-            red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
-            blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
-            green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
-            norm_red = normalize_frequency(red_frequency)
-            norm_blue = normalize_frequency(blue_frequency)
-            norm_green = normalize_frequency(green_frequency)
+        def run(*args):
 
-            hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
-
-            if 320 < hue < 360 and prev_color != "blue" and temp_color != "red":
-                temp_color = "red"
-                color_change_time = curr_time
-            elif 120 < hue < 180 and prev_color != "yellow" and temp_color != "green":
-                temp_color = "green"
-                color_change_time = curr_time
-            elif 200 < hue < 240 and prev_color != "red" and temp_color != "blue":
-                temp_color = "blue"
-                color_change_time = curr_time
-            elif 10 < hue < 50 and prev_color != "green" and temp_color != "yellow":
-                temp_color = "yellow"
-                color_change_time = curr_time
-
-            if curr_time - color_change_time >= 0.06:
-                curr_color = temp_color
-                switched_color = True
-
-            if curr_time - last_send_time >= 0.1:
-                last_send_time = curr_time
-                send_data(
-                    curr_color, switched_color, curr_time - color_change_time >= 2
-                )
+                curr_color = prev_color = " "
+                color_change_time = 0
+                last_send_time = 0
                 switched_color = False
+                waited_2_seconds = False
+        try:
+            while(True):
+                curr_time = time.time()
 
-            if curr_color != prev_color:
-                print(curr_color)
+                red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
+                blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
+                green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
+                norm_red = normalize_frequency(red_frequency)
+                norm_blue = normalize_frequency(blue_frequency)
+                norm_green = normalize_frequency(green_frequency)
 
-            prev_color = curr_color
-    finally:
-        GPIO.cleanup()
+                hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
+
+                if 320 < hue < 360 and prev_color != "blue" and temp_color != "red":
+                    temp_color = "red"
+                    color_change_time = curr_time
+                elif 120 < hue < 180 and prev_color != "yellow" and temp_color != "green":
+                    temp_color = "green"
+                    color_change_time = curr_time
+                elif 200 < hue < 240 and prev_color != "red" and temp_color != "blue":
+                    temp_color = "blue"
+                    color_change_time = curr_time
+                elif 10 < hue < 50 and prev_color != "green" and temp_color != "yellow":
+                    temp_color = "yellow"
+                    color_change_time = curr_time
+
+                if curr_time - color_change_time >= 0.06:
+                    curr_color = temp_color
+                    switched_color = True
+
+                waited_2_seconds = curr_time - color_change_time >= 2
+                
+                if curr_time - last_send_time >= 0.1:
+                    last_send_time = curr_time
+                    switched_color = False
+                    ws.send({'color': curr_color, 'switched': switched_color, 'didnt switch': waited_2_seconds})
+
+
+                if curr_color != prev_color:
+                    print(curr_color)
+
+                prev_color = curr_color
+                    
+        finally:
+            GPIO.cleanup()
+
+        thread.start_new_thread(run, ())
+    
+    return on_ws_open
+    
+def open_websocket(color):
+    print("Open websocke")
+    def reopen_websocket():
+        open_websocket(color)
+
+    while True:
+        try:
+            print("Posting")
+            res = requests.post(f'http://{FMS_SERVER}/login'
+                , data={'username': USERNAME, 'password': PASSWORD}
+                , allow_redirects=False, timeout=5
+            )
+            break
+        except ConnectTimeout as e:
+            pass
+
+    print("Connection to websocke")
+    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
+        , on_open=get_on_ws_open_callback()
+        , on_close=reopen_websocket
+        , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
+    )
+
+    ws.run_forever()
+
+        
+def main():
+    HELP = f"USAGE: python3 {sys.argv[0]} red/blue"
+    if len(sys.argv) < 2:
+        print(HELP)
+        return
+
+    color = sys.argv[1]
+    if color not in ['red', 'blue']:
+        print(HELP)
+        return
+
+    
+    open_websocket(color)
+
+main()
