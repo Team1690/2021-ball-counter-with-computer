@@ -14,7 +14,8 @@ PASSWORD = 'CAR1690IL'
 
 goal_char_msg_map = {
     "I": '{ "type": "CI" }',
-    "O": '{ "type": "CO" }'
+    "O": '{ "type": "CO" }',
+    "L": '{ "type": "CL"}'
 }
 
 # Return the first arduino uno connected to PC
