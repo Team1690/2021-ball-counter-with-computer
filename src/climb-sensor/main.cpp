@@ -72,6 +72,49 @@ void Blink(int offTime, int onTime, char colors)
   delay(offTime);
 }
 
+float read_raw_pitch()
+{
+  normAccel = mpu.readNormalizeAccel();
+  return (atan2(normAccel.XAxis, normAccel.YAxis) * 180.0) / M_PI;
+}
+
+void goto_sleep()
+{
+  digitalWrite(MPUPin, LOW);
+  LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+  return;
+}
+
+void turn_on_MPU()
+{
+  digitalWrite(MPUPIN, 1);
+  LED('g');
+  delay(10);
+  LED('n');
+  while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
+  {
+    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
+    delay(10);
+  }
+  for (int j = 0; j < 2; j++)
+  {
+    temp_normAccel = mpu.readNormalizeAccel();
+    delay(10);
+  }
+  return;
+}
+
+float read_filtered_pitch(int n)
+{
+  float accum = 0;
+  for (int i = 0; i < n; i++)
+  {
+    accum += read_raw_pitch();
+    delay(10);
+  }
+  return (accum / n);
+}
+
 void wake()
 {
   angle = read_filtered_pitch(25) - pitch_offset;
@@ -110,48 +153,6 @@ void sleep()
   {
     enable_wake = true;
   }
-}
-
-float read_raw_pitch()
-{
-  normAccel = mpu.readNormalizeAccel();
-  return (atan2(normAccel.XAxis, normAccel.YAxis) * 180.0) / M_PI;
-}
-
-float read_filtered_pitch(int n)
-{
-  float accum = 0;
-  for (int i = 0; i < n; i++)
-  {
-    accum += read_raw_pitch();
-    delay(10);
-  }
-  return (accum / n);
-}
-void goto_sleep()
-{
-  digitalWrite(MPUPin, LOW);
-  LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-  return;
-}
-
-void turn_on_MPU()
-{
-  digitalWrite(MPUPIN, 1);
-  LED('g');
-  delay(10);
-  LED('n');
-  while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
-  {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
-    delay(10);
-  }
-  for (int j = 0; j < 2; j++)
-  {
-    temp_normAccel = mpu.readNormalizeAccel();
-    delay(10);
-  }
-  return;
 }
 
 void setup()
