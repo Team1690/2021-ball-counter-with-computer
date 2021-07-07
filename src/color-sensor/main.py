@@ -89,7 +89,7 @@ def get_on_ws_open_callback():
                 switched_color = False
                 waited_2_seconds = False
         try:
-            while(True):
+            while True:
                 curr_time = time.time()
 
                 red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
@@ -123,8 +123,7 @@ def get_on_ws_open_callback():
                 if curr_time - last_send_time >= 0.1:
                     last_send_time = curr_time
                     switched_color = False
-                    ws.send({'color': curr_color, 'switched': switched_color, 'didnt switch': waited_2_seconds})
-
+                    ws.send(f'{"color": "{curr_color}", "switched": "{switched_color}", "didnt switch": "{waited_2_seconds}"}')
 
                 if curr_color != prev_color:
                     print(curr_color)
