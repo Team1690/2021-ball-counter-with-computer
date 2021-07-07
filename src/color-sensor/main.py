@@ -82,56 +82,55 @@ def get_on_ws_open_callback():
         setup()
 
         def run(*args):
+            curr_color = prev_color = " "
+            color_change_time = 0
+            last_send_time = 0
+            switched_color = False
+            waited_2_seconds = False
+            try:
+                while True:
+                    curr_time = time.time()
 
-                curr_color = prev_color = " "
-                color_change_time = 0
-                last_send_time = 0
-                switched_color = False
-                waited_2_seconds = False
-        try:
-            while True:
-                curr_time = time.time()
+                    red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
+                    blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
+                    green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
+                    norm_red = normalize_frequency(red_frequency)
+                    norm_blue = normalize_frequency(blue_frequency)
+                    norm_green = normalize_frequency(green_frequency)
 
-                red_frequency = get_raw_frequency(GPIO.LOW, GPIO.LOW)
-                blue_frequency = get_raw_frequency(GPIO.LOW, GPIO.HIGH)
-                green_frequency = get_raw_frequency(GPIO.HIGH, GPIO.HIGH)
-                norm_red = normalize_frequency(red_frequency)
-                norm_blue = normalize_frequency(blue_frequency)
-                norm_green = normalize_frequency(green_frequency)
+                    hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
 
-                hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
+                    if 320 < hue < 360 and prev_color != "blue" and temp_color != "red":
+                        temp_color = "red"
+                        color_change_time = curr_time
+                    elif 120 < hue < 180 and prev_color != "yellow" and temp_color != "green":
+                        temp_color = "green"
+                        color_change_time = curr_time
+                    elif 200 < hue < 240 and prev_color != "red" and temp_color != "blue":
+                        temp_color = "blue"
+                        color_change_time = curr_time
+                    elif 10 < hue < 50 and prev_color != "green" and temp_color != "yellow":
+                        temp_color = "yellow"
+                        color_change_time = curr_time
 
-                if 320 < hue < 360 and prev_color != "blue" and temp_color != "red":
-                    temp_color = "red"
-                    color_change_time = curr_time
-                elif 120 < hue < 180 and prev_color != "yellow" and temp_color != "green":
-                    temp_color = "green"
-                    color_change_time = curr_time
-                elif 200 < hue < 240 and prev_color != "red" and temp_color != "blue":
-                    temp_color = "blue"
-                    color_change_time = curr_time
-                elif 10 < hue < 50 and prev_color != "green" and temp_color != "yellow":
-                    temp_color = "yellow"
-                    color_change_time = curr_time
+                    if curr_time - color_change_time >= 0.06:
+                        curr_color = temp_color
+                        switched_color = True
 
-                if curr_time - color_change_time >= 0.06:
-                    curr_color = temp_color
-                    switched_color = True
-
-                waited_2_seconds = curr_time - color_change_time >= 2
+                    waited_2_seconds = curr_time - color_change_time >= 2
                 
-                if curr_time - last_send_time >= 0.1:
-                    last_send_time = curr_time
-                    switched_color = False
-                    ws.send(f'{"color": "{curr_color}", "switched": "{switched_color}", "didnt switch": "{waited_2_seconds}"}')
+                    if curr_time - last_send_time >= 0.1:
+                        last_send_time = curr_time
+                        switched_color = False
+                        ws.send(f'{"color": "{curr_color}", "switched": "{switched_color}", "didnt switch": "{waited_2_seconds}"}')
 
-                if curr_color != prev_color:
-                    print(curr_color)
+                    if curr_color != prev_color:
+                        print(curr_color)
 
-                prev_color = curr_color
+                    prev_color = curr_color
                     
-        finally:
-            GPIO.cleanup()
+            finally:
+                GPIO.cleanup()
 
         thread.start_new_thread(run, ())
     
