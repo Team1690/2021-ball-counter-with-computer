@@ -10,7 +10,6 @@ import websocket
 FMS_SERVER = "10.0.100.5:8080"
 ALLIANCE_COLOR = 'red' # Change accordingly
 USERNAME = 'admin'
-PASSWORD = 'CAR1690IL'
 
 goal_char_msg_map = {
     "I": '{ "type": "CI" }',
@@ -53,7 +52,7 @@ def get_on_ws_open_callback(connection):
     
     return on_ws_open
     
-def open_websocket(serial_connection, color):
+def open_websocket(serial_connection, password, color):
     print("Open websocke")
     def reopen_websocket():
         open_websocket(serial_connection, color)
@@ -62,7 +61,7 @@ def open_websocket(serial_connection, color):
         try:
             print("Posting")
             res = requests.post(f'http://{FMS_SERVER}/login'
-                , data={'username': USERNAME, 'password': PASSWORD}
+                , data={'username': USERNAME, 'password': password}
                 , allow_redirects=False, timeout=5
             )
             break
@@ -80,12 +79,13 @@ def open_websocket(serial_connection, color):
 
         
 def main():
-    HELP = f"USAGE: python3 {sys.argv[0]} red/blue"
-    if len(sys.argv) < 2:
+    HELP = f"USAGE: python3 {sys.argv[0]} fms_admin_password red/blue"
+    if len(sys.argv) < 3:
         print(HELP)
         return
 
-    color = sys.argv[1]
+    password = sys.argv[1]
+    color = sys.argv[2]
     if color not in ['red', 'blue']:
         print(HELP)
         return
@@ -95,6 +95,6 @@ def main():
     if (connection.is_open):
         print("Connected to arduino")
     
-    open_websocket(connection, color)
+    open_websocket(connection, password, color)
 
 main()

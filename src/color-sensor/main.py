@@ -14,7 +14,6 @@ import websocket
 FMS_SERVER = "10.0.100.5:8080"
 ALLIANCE_COLOR = 'red' # Change accordingly
 USERNAME = 'admin'
-PASSWORD = 'CAR1690IL'
 
 S2_PIN = 19
 S3_PIN = 13
@@ -136,7 +135,7 @@ def get_on_ws_open_callback():
     
     return on_ws_open
     
-def open_websocket(color):
+def open_websocket(password, color):
     print("Open websocke")
     def reopen_websocket():
         open_websocket(color)
@@ -145,7 +144,7 @@ def open_websocket(color):
         try:
             print("Posting")
             res = requests.post(f'http://{FMS_SERVER}/login'
-                , data={'username': USERNAME, 'password': PASSWORD}
+                , data={'username': USERNAME, 'password': password}
                 , allow_redirects=False, timeout=5
             )
             break
@@ -163,17 +162,18 @@ def open_websocket(color):
 
         
 def main():
-    HELP = f"USAGE: python3 {sys.argv[0]} red/blue"
-    if len(sys.argv) < 2:
+    HELP = f"USAGE: python3 {sys.argv[0]} fms_admin_password red/blue"
+    if len(sys.argv) < 3:
         print(HELP)
         return
 
-    color = sys.argv[1]
+    password = sys.argv[1]
+    color = sys.argv[2]
     if color not in ['red', 'blue']:
         print(HELP)
         return
 
     
-    open_websocket(color)
+    open_websocket(password, color)
 
 main()
