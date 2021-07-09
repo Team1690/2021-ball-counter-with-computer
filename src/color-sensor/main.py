@@ -20,7 +20,7 @@ USERNAME = 'admin'
 S2_PIN = 19
 S3_PIN = 13
 OUTPUT_PIN = 26
-CYCLES_TO_WAIT = 3
+CYCLES_TO_WAIT = 10
 
 COLORS = {
     "blue": {"prev": "yellow", "next": "green"},
@@ -108,16 +108,16 @@ def get_on_ws_open_callback():
                     norm_blue = normalize_frequency(blue_frequency)
                     norm_green = normalize_frequency(green_frequency)
                     hue, saturation = hue_saturation_from_rgb(norm_red, norm_green, norm_blue)
-                    if 320 < hue < 360 and curr_color != "red":
+                    if 250 < hue < 360 and curr_color != "red":
                         curr_color = "red"
                         color_change_time = curr_time
-                    elif 120 < hue < 180 and curr_color != "green":
+                    elif 155 < hue < 190 and curr_color != "green":
                         curr_color = "green"
                         color_change_time = curr_time
                     elif 200 < hue < 240 and curr_color != "blue":
                         curr_color = "blue"
                         color_change_time = curr_time
-                    elif 10 < hue < 50 and curr_color != "yellow":
+                    elif 10 < hue < 155 and curr_color != "yellow":
                         curr_color = "yellow"
                         color_change_time = curr_time
 
@@ -126,10 +126,9 @@ def get_on_ws_open_callback():
                         or not prev_send_color):
                         send_color = curr_color
                         send_color_change_time = curr_time
-
                     try:
                         pass
-                        # print(hue, saturation, colored(curr_color, curr_color), colored(send_color, send_color))
+                       # print(hue, saturation, colored(curr_color, curr_color), colored(send_color, send_color))
                     except:
                         pass
                         
@@ -145,7 +144,7 @@ def get_on_ws_open_callback():
                         ws.send(json.dumps({"type": "WL", "data": data}))
                         rotation = 0
                         if send_color != prev_send_color:
-                            # print(f"sending: {data}")
+                            print(f"sending: {data}")
                             pass
                         
                         prev_send_color = send_color
