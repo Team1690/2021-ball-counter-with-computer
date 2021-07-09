@@ -152,11 +152,15 @@ def get_on_ws_open_callback():
         thread.start_new_thread(run, ())
     
     return on_ws_open
+
+def on_close(ws, close_status, close_msg):
+    ws.close()
     
+def on_error(ws, error):
+    print("WS ERROR: ", error)
+
 def open_websocket(password, color):
-    print("Open websocke")
-    def reopen_websocket():
-        open_websocket(color)
+    print("Open websocket")
 
     while True:
         try:
@@ -166,17 +170,20 @@ def open_websocket(password, color):
                 , allow_redirects=False, timeout=5
             )
             break
-        except ConnectTimeout as e:
+        except Exception as e:
             pass
 
     print("Connection to websocke")
-    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
-        , on_open=get_on_ws_open_callback()
-        , on_close=reopen_websocket
-        , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
-    )
+    while True:
+        ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
+            , on_open=get_on_ws_open_callback()
+            , on_close=on_close
+            , on_error=on_error
+            , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
+        )
 
-    ws.run_forever()
+        ws.run_forever()
+        time.sleep(1)
 
         
 def main():
