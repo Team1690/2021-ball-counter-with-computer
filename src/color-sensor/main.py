@@ -11,7 +11,7 @@ import time
 import _thread as thread
 import websocket
 import json
-import colorsys
+from termcolor import colored
 
 FMS_SERVER = "10.0.100.5:8080"
 ALLIANCE_COLOR = 'red' # Change accordingly
@@ -92,6 +92,7 @@ def get_on_ws_open_callback():
         def run(*args):
             curr_color = prev_color = send_color = prev_send_color = ""
             color_change_time = 0
+            send_color_change_time = 0
             last_send_time = 0
             rotation = 0
             switched_color = False
@@ -124,20 +125,28 @@ def get_on_ws_open_callback():
                         and (prev_send_color in COLORS.get(curr_color, dict()).values() \
                         or not prev_send_color):
                         send_color = curr_color
+                        send_color_change_time = curr_time
+
+                    try:
+                        pass
+                        # print(hue, saturation, colored(curr_color, curr_color), colored(send_color, send_color))
+                    except:
+                        pass
                         
                     if send_color and COLORS[send_color]["prev"] == prev_send_color:
                         rotation += 1
                     elif send_color and COLORS[send_color]["next"] == prev_send_color:
                         rotation -= 1
 
-                    waited_2_seconds = curr_time - color_change_time >= 2
-                    waited_5_seconds = curr_time - color_change_time >= 5
+                    waited_2_seconds = (curr_time - send_color_change_time) >= 2
+                    waited_5_seconds = (curr_time - send_color_change_time) >= 5
                     if curr_time - last_send_time >= 0.1:
                         data = json.dumps({"color": send_color, "rotation": rotation, "waited2": waited_2_seconds, "waited5": waited_5_seconds})
                         ws.send(json.dumps({"type": "WL", "data": data}))
                         rotation = 0
                         if send_color != prev_send_color:
-                            print(f"sending: {send_color}")
+                            # print(f"sending: {data}")
+                            pass
                         
                         prev_send_color = send_color
 
