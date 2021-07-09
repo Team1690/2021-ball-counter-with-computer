@@ -17,6 +17,8 @@ goal_char_msg_map = {
     "L": '{ "type": "CL"}'
 }
 
+close_thread = False
+
 # Return the first arduino uno connected to PC
 def find_arduino_port(): 
     for port in serial.tools.list_ports.comports():
@@ -32,30 +34,50 @@ def get_goal_char(connection):
 def get_msg_from_goal_char(goal_char):
     return goal_char_msg_map[goal_char]
 
+index = 0
+
 def get_on_ws_open_callback(connection):
+    global index
+
+    index_ = index
+    index = index + 1
     def on_ws_open(ws):
         print("Connected to FMS")
 
         def run(*args):
-            while(True):
+            global close_thread
+
+            print("Running")
+            close_thread = False
+            while(not close_thread):
                 goal_char = get_goal_char(connection)
-                print(f'Info: recieved "{goal_char}"')
+                print(f'Info {index_}: recieved "{goal_char}"')
 
                 if (goal_char in goal_char_msg_map):
-                    print(f'Info: sent {get_msg_from_goal_char(goal_char)}')
+                    print(f'Info {index_}: sent {get_msg_from_goal_char(goal_char)}')
                     ws.send(get_msg_from_goal_char(goal_char))
                 else:
                     pass
                     # print('Error: unknown char recieved')
+            print("Closing thread")
 
         thread.start_new_thread(run, ())
     
     return on_ws_open
     
+def on_close(ws, close_status, close_msg):
+    global close_thread
+
+    close_thread = True
+
+    ws.close()
+    print("Connection to Chessy-Arena disconnected")
+
+def on_error(ws, error):
+    print("WS ERROR: ", error)
+
 def open_websocket(serial_connection, password, color):
-    print("Open websocke")
-    def reopen_websocket():
-        open_websocket(serial_connection, color)
+    print("Open websocket")
 
     while True:
         try:
@@ -65,17 +87,22 @@ def open_websocket(serial_connection, password, color):
                 , allow_redirects=False, timeout=5
             )
             break
-        except ConnectTimeout as e:
-            pass
+        except Exception as e:
+            print("Login to Cheesy-Arena failed: ", e)
+
+        time.sleep(1)
 
     print("Connection to websocke")
-    ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
-        , on_open=get_on_ws_open_callback(serial_connection)
-        , on_close=reopen_websocket
-        , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
-    )
+    while True:
+        ws = websocket.WebSocketApp(f'ws://{FMS_SERVER}/panels/scoring/{color}/websocket'
+            , on_open=get_on_ws_open_callback(serial_connection)
+            , on_close=on_close
+            , on_error=on_error
+            , cookie="; ".join(["%s=%s" %(i, j) for i, j in res.cookies.get_dict().items()])
+        )
 
-    ws.run_forever()
+        ws.run_forever()
+        time.sleep(1)
 
         
 def main():
@@ -90,7 +117,7 @@ def main():
         print(HELP)
         return
 
-    connection = serial.Serial(find_arduino_port(), 9600)
+    connection = serial.Serial(find_arduino_port(), 9600, timeout=1)
 
     if (connection.is_open):
         print("Connected to arduino")
