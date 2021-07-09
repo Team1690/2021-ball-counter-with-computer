@@ -172,11 +172,4 @@ void loop()
 
     LEDLongPulse(LED_PIN, true);
   }
-  Serial.print(one_point_sensor.get_value());
-  Serial.print("\t");
-  Serial.print(two_points_sensor1.get_value());
-  Serial.print("\t");
-  Serial.print(two_points_sensor2.get_value());
-  Serial.print("\t");
-  Serial.println(three_points_sensor.get_value());
 }
